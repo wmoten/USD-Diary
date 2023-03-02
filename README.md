@@ -8,12 +8,11 @@ This program creates a new USD file with a scope prim that references the origin
 ### C++
 project compiles and executes using the following commands:
 
-```bash
-cd cpp/build
+```
 USD_INSTALL_ROOT=/wherever/you/installed/USD/to 
-cmake ..
+cmake .
 make
-./run_it <usdFilePath> [scopeName]
+./scope_reparent_run <usdFilePath> [scopeName]
 ```
 
 `USD_INSTALL_ROOT` typically defaults to `/usr/local/USD`
@@ -26,7 +25,7 @@ See [USD's build documentation](https://github.com/PixarAnimationStudios/USD#3-r
 
 To run the program, use the following command:
 
-```./run_it <usdFilePath> [scopeName]```
+```./scope_reparent_run <usdFilePath> [scopeName]```
 
 If no scope name is provided, the program will use the name of the original file (without the extension) as the scope name.
 

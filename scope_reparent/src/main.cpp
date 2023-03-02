@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "string_view"
 #include <filesystem>
 #include <cstdlib>
 namespace fs = std::__fs::filesystem;
@@ -13,11 +14,11 @@ namespace fs = std::__fs::filesystem;
 #include <pxr/usd/sdf/path.h>
 #include <pxr/usd/sdf/types.h>
 #include <pxr/usd/usdGeom/scope.h>
-#include "../include/cli_processor.h"
+#include "../include/cli_processor.hpp"
 
 // add names of prims that can never be the "default prim". 
 // Typically a DCC or pipeline will add these prims for meta data purposes
-constexpr std::vector<std::string> BLACKLIST_PRIM = {"HoudiniLayerInfo", "MetadataInfo"};
+constexpr std::array<std::string_view, 2> BLACKLIST_PRIM = {"HoudiniLayerInfo", "MetadataInfo"};
 
 
 // TODO: explore private and public functions. 
@@ -27,7 +28,7 @@ constexpr std::vector<std::string> BLACKLIST_PRIM = {"HoudiniLayerInfo", "Metada
 bool createNewUsdFile(const std::string& originalFilePath, const std::string& scopeName) {
     
     // Derive the new file path from the original file path and scope name.
-    std::string newFilePath = deriveNewFilePath(originalFilePath, scopeName);
+    std::string newFilePath = cli_processor::deriveNewFilePath(originalFilePath, scopeName);
 
     // Create a new USD stage using the derived file path.
     pxr::UsdStageRefPtr stage = pxr::UsdStage::CreateNew(newFilePath);
@@ -35,7 +36,7 @@ bool createNewUsdFile(const std::string& originalFilePath, const std::string& sc
     // Check if the stage creation was successful.
     if (!stage) {
         // If not, print an error message and return false.
-        raiseError("Error: Failed to create new USD stage.");
+        cli_processor::raiseError("Error: Failed to create new USD stage.");
         return false;
     }
 
@@ -47,12 +48,12 @@ bool createNewUsdFile(const std::string& originalFilePath, const std::string& sc
     // Check if the scope prim creation was successful.
     if (!scopePrim) {
         // If not, print an error message and return false.
-        raiseError("Error: Failed to create Scope prim.");
+        cli_processor::raiseError("Error: Failed to create Scope prim.");
         return false;
     }
 
     // Add a reference to the original file path to the new scope prim.
-    scopePrim.GetPrim().GetReferences().AddReference(getFileWithPrefix(originalFilePath));
+    scopePrim.GetPrim().GetReferences().AddReference(cli_processor::getFileWithPrefix(originalFilePath));
 
     // Save the USD stage to the new file path.
     stage->Save();
@@ -66,7 +67,7 @@ bool hasDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& filePat
     // Check if the stage has a default prim set
     pxr::UsdPrim defaultPrim = stage->GetDefaultPrim();
     if (!defaultPrim) {
-        raiseError("Error: USD stage from file " + filePath + " has no default prim set");
+        cli_processor::raiseError("Error: USD stage from file " + filePath + " has no default prim set");
         return false;
     }
 
@@ -111,7 +112,7 @@ std::vector<pxr::UsdPrim> getChildPrims(const pxr::UsdPrim& parentPrim) {
     pxr::UsdPrimSiblingRange childPrimRange = parentPrim.GetChildren();
     std::vector<pxr::UsdPrim> childPrims(childPrimRange.begin(), childPrimRange.end());
     for (auto it = childPrims.begin(); it != childPrims.end();) {
-        if (std::find(BLACKLIST_PRIM.begin(), BLACKLIST_PRIM.end(), it->GetName()) != BLACKLIST_PRIM.end()) {
+        if (std::find(BLACKLIST_PRIM.begin(), BLACKLIST_PRIM.end(), std::string(it->GetName())) != BLACKLIST_PRIM.end()) {
             it = childPrims.erase(it);
         } else {
             ++it;
@@ -124,7 +125,7 @@ bool assignDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& file
 
     pxr::UsdPrim parentPrim = stage->GetPseudoRoot();
     if (!parentPrim) {
-        raiseError("USD stage from file " + filePath + " has no root prim");
+        cli_processor::raiseError("USD stage from file " + filePath + " has no root prim");
         return false;
     }
 
@@ -137,7 +138,7 @@ bool assignDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& file
     }
 
     if (childPrims.empty()) {
-        raiseError("USD stage from file " + filePath + " has no valid child prims");
+        cli_processor::raiseError("USD stage from file " + filePath + " has no valid child prims");
         return false;
     }
 
@@ -145,7 +146,7 @@ bool assignDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& file
     printPrimList(childPrims);
     int selection = getUserPrimSelection(childPrims.size());
     if (selection < 0 || selection >= childPrims.size()) {
-        raiseError("Invalid selection");
+        cli_processor::raiseError("Invalid selection");
         return false;
     }
 
@@ -160,12 +161,12 @@ int main(int argc, char* argv[]) {
 
     std::string usdFilePath, scopeName;
     
-    if (!extractCommandLineArguments(argc, argv, usdFilePath, scopeName)) {
+    if (!cli_processor::extractCommandLineArguments(argc, argv, usdFilePath, scopeName)) {
         return EXIT_FAILURE;
     }
     pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdFilePath);
     if (!stage) {
-        raiseError("Error opening USD stage from file " + usdFilePath);
+        cli_processor::raiseError("Error opening USD stage from file " + usdFilePath);
         return EXIT_FAILURE;
     }
 

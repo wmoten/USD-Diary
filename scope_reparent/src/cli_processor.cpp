@@ -1,11 +1,12 @@
-
-#include "../include/cli_processor.h"
+#include "../include/cli_processor.hpp"
 #include <iostream>
 #include <string>
 #include <filesystem>
 #include <cstdlib>
 namespace fs = std::__fs::filesystem;
 
+
+namespace cli_processor {
 
 
 void raiseError(const std::string& message) {
@@ -58,4 +59,6 @@ std::string getFileWithPrefix(const std::string& filePath) {
     std::string filename = path.stem().string();
     std::string extension = path.extension().string();
     return "./" + filename + extension;
+}
+
 }

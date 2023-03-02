@@ -25,16 +25,16 @@ find_library(USD_VT usd_vt HINTS ${USD_LIBRARY_DIRECTORY})
 find_package(PythonLibs REQUIRED)
 
 # 4. Include/Link Everything
-add_executable(scope_reparent "scope_reparent/cpp/main.cpp")
+add_executable(scope_reparent_run "scope_reparent/cpp/main.cpp")
 
-target_include_directories(scope_reparent
+target_include_directories(scope_reparent_run
 PUBLIC
 	${PYTHON_INCLUDE_PATH}
 	${USD_INCLUDE_DIRECTORY}
 )
 
 target_link_libraries(
-scope_reparent
+	scope_reparent_run
 	${PYTHON_LIBRARY}
 	${USD_BOOST_PYTHON}
     ${USD_KIND}

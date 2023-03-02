@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <cstdlib>
 namespace fs = std::__fs::filesystem;
 
 #include <pxr/base/tf/token.h>
@@ -19,7 +20,6 @@ namespace fs = std::__fs::filesystem;
 const std::vector<std::string> BLACKLIST_PRIM = {"HoudiniLayerInfo", "MetadataInfo"};
 
 
-// TODO: Many of the functions below are opening the same stage, refactor to share a shared pointer and refresh stage when needed.
 // TODO: explore private and public functions. 
 
 void raiseError(const std::string& message) {
@@ -28,7 +28,7 @@ void raiseError(const std::string& message) {
 
 
 void printUsage() {
-    raiseError("Usage: ./scope_reparent <usdFilePath> [scopeName]");
+    raiseError("Usage: ./scope_reparent_run <usdFilePath> [scopeName]");
 }
 
 bool extractCommandLineArguments(int argc, char* argv[], std::string& usdFilePath, std::string& scopeName) {
@@ -39,12 +39,14 @@ bool extractCommandLineArguments(int argc, char* argv[], std::string& usdFilePat
 
     usdFilePath = argv[1];
 
+    // did the user enter a scope name?
     if (argc == 3) {
+        // Yes!
         scopeName = argv[2];
     } else {
-        // If no second argument is provided, use the file name (without the extension) as the scope name.
-        const std::string fileName = usdFilePath.substr(usdFilePath.find_last_of('/') + 1);
-        scopeName = fileName.substr(0, fileName.find_last_of('.'));
+        // No :(
+        std::cout << "Please enter the name of the scope prim you'd like to create: ";
+        std::getline(std::cin, scopeName);
     }
 
     return true;
@@ -74,10 +76,6 @@ std::string getFileWithPrefix(const std::string& filePath) {
 // This function creates a new USD file with a given scope name and original file path.
 // It returns true if successful, false otherwise.
 bool createNewUsdFile(const std::string& originalFilePath, const std::string& scopeName) {
-    /* NEWBIE NOTE: By using const std::string&, 
-        we are telling the compiler that the function promises 
-        not to modify the string passed in.*/
-
     
     // Derive the new file path from the original file path and scope name.
     std::string newFilePath = deriveNewFilePath(originalFilePath, scopeName);
@@ -114,13 +112,7 @@ bool createNewUsdFile(const std::string& originalFilePath, const std::string& sc
     return true;
 }
 
-bool hasDefaultPrim(const std::string& filePath) {
-    // Open the USD stage from the file
-    pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(filePath);
-    if (!stage) {
-        raiseError("Error opening USD stage from file " + filePath);
-        return false;
-    }
+bool hasDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& filePath) {
 
     // Check if the stage has a default prim set
     pxr::UsdPrim defaultPrim = stage->GetDefaultPrim();
@@ -179,12 +171,7 @@ std::vector<pxr::UsdPrim> getChildPrims(const pxr::UsdPrim& parentPrim) {
     return childPrims;
 }
 
-bool assignDefaultPrim(const std::string& filePath) {
-    pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(filePath);
-    if (!stage) {
-        raiseError("Failed to open USD stage from file " + filePath);
-        return false;
-    }
+bool assignDefaultPrim(const pxr::UsdStageRefPtr& stage, const std::string& filePath) {
 
     pxr::UsdPrim parentPrim = stage->GetPseudoRoot();
     if (!parentPrim) {
@@ -225,17 +212,22 @@ int main(int argc, char* argv[]) {
     std::string usdFilePath, scopeName;
     
     if (!extractCommandLineArguments(argc, argv, usdFilePath, scopeName)) {
-        return 1;
+        return EXIT_FAILURE;
+    }
+    pxr::UsdStageRefPtr stage = pxr::UsdStage::Open(usdFilePath);
+    if (!stage) {
+        raiseError("Error opening USD stage from file " + usdFilePath);
+        return EXIT_FAILURE;
     }
 
     // Validate the stage has a default prim, otherwise this sort of reference will not work.
-    if (!hasDefaultPrim(usdFilePath) && !assignDefaultPrim(usdFilePath)) {
+    if (!hasDefaultPrim(stage, usdFilePath) && !assignDefaultPrim(stage, usdFilePath)) {
         return 1;
     }
 
     if (!createNewUsdFile(usdFilePath, scopeName)) {
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

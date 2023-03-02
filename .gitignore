@@ -3,5 +3,9 @@
 .vscode/
 scope_reparent/usda/*
 !scope_reparent/usda/base.usda
-
+cmake*
+compile*
+make*
+*run
+!CMakeLists.txt
 build/

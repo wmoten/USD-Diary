@@ -1,8 +1,8 @@
 # 1. Requirements
-cmake_minimum_required(VERSION 2.8.11)
-project(purposes)
+cmake_minimum_required(VERSION 3.10)
+project(usd_diary)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 2.Configuration
@@ -25,18 +25,16 @@ find_library(USD_VT usd_vt HINTS ${USD_LIBRARY_DIRECTORY})
 find_package(PythonLibs REQUIRED)
 
 # 4. Include/Link Everything
-add_executable(run_it
-	main.cpp
-)
+add_executable(scope_reparent "scope_reparent/cpp/main.cpp")
 
-target_include_directories(run_it
+target_include_directories(scope_reparent
 PUBLIC
 	${PYTHON_INCLUDE_PATH}
 	${USD_INCLUDE_DIRECTORY}
 )
 
 target_link_libraries(
-run_it
+scope_reparent
 	${PYTHON_LIBRARY}
 	${USD_BOOST_PYTHON}
     ${USD_KIND}

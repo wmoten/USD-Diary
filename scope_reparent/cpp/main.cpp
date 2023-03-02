@@ -28,7 +28,7 @@ void raiseError(const std::string& message) {
 
 
 void printUsage() {
-    raiseError("Usage: ./run_it <usdFilePath> [scopeName]");
+    raiseError("Usage: ./scope_reparent <usdFilePath> [scopeName]");
 }
 
 bool extractCommandLineArguments(int argc, char* argv[], std::string& usdFilePath, std::string& scopeName) {

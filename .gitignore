@@ -1,0 +1,5 @@
+.vscode/
+scope_reparent/usda/*
+!scope_reparent/usda/base.usda
+
+build/
